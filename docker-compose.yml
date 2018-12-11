@@ -6,7 +6,7 @@ services:
     networks:
       - traefik-net
     volumes:
-      - backup-vol:/backup
+      - backup-vol:/backup:ro
     configs:
       - source: backup-nginx-conf
         target: /etc/nginx/nginx.conf
