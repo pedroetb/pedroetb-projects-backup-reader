@@ -1,0 +1,53 @@
+version: '3.7'
+
+services:
+  backup-reader:
+    image: nginx:${IMAGE_TAG:-alpine}
+    networks:
+      - traefik-net
+    volumes:
+      - backup-vol:/backup
+    configs:
+      - source: backup-nginx-conf
+        target: /etc/nginx/nginx.conf
+    healthcheck:
+      test: wget --spider http://localhost
+      interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL}
+      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT}
+      retries: ${BACKUP_READER_HEALTHCHECK_RETRIES}
+      start_period: ${BACKUP_READER_HEALTHCHECK_START_PERIOD}
+    deploy:
+      mode: replicated
+      replicas: ${BACKUP_READER_REPLICAS}
+      labels:
+        traefik.frontend.auth.basic.users: ${BACKUP_READER_UI_AUTH}
+        traefik.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME}
+        traefik.backend: backup-reader
+        traefik.port: '80'
+      restart_policy:
+        delay: ${BACKUP_READER_RESTART_POLICY_DELAY}
+        window: ${BACKUP_READER_RESTART_POLICY_WINDOW}
+      resources:
+        limits:
+          cpus: "${BACKUP_READER_LIMITS_CPUS}"
+          memory: ${BACKUP_READER_LIMITS_MEMORY}
+        reservations:
+          memory: ${BACKUP_READER_RESERVATIONS_MEMORY}
+
+networks:
+  traefik-net:
+    name: ${TRAEFIK_NET_NAME:-traefik-net}
+    external: true
+
+configs:
+  backup-nginx-conf:
+    file: ./nginx.conf
+
+volumes:
+  backup-vol:
+    name: ${BACKUP_READER_DATA_VOL_NAME:-backup-vol}
+    driver: local
+    driver_opts:
+      type: ${BACKUP_READER_DATA_VOLUME_TYPE}
+      o: ${BACKUP_READER_DATA_VOLUME_OPTIONS}
+      device: ${BACKUP_READER_DATA_VOLUME_DEVICE}
