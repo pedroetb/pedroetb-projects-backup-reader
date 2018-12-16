@@ -7,8 +7,9 @@ services:
       - traefik-net
     volumes:
       - backup-vol:/backup:ro
+      - htpasswd-vol:/htpasswd
     configs:
-      - source: backup-nginx-conf
+      - source: nginx-conf
         target: /etc/nginx/nginx.conf
     healthcheck:
       test: wget --spider http://localhost
@@ -20,8 +21,9 @@ services:
       mode: replicated
       replicas: ${BACKUP_READER_REPLICAS}
       labels:
-        traefik.frontend.auth.basic.users: ${BACKUP_READER_UI_AUTH}
-        traefik.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME}
+        traefik.root.frontend.auth.basic.users: ${BACKUP_READER_UI_AUTH}
+        traefik.root.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/
+        traefik.default.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME}
         traefik.backend: backup-reader
         traefik.port: '80'
       restart_policy:
@@ -40,7 +42,8 @@ networks:
     external: true
 
 configs:
-  backup-nginx-conf:
+  nginx-conf:
+    name: ${BACKUP_READER_NGINX_CONF_NAME:-backup-nginx-conf}
     file: ./nginx.conf
 
 volumes:
@@ -51,3 +54,6 @@ volumes:
       type: ${BACKUP_READER_DATA_VOLUME_TYPE}
       o: ${BACKUP_READER_DATA_VOLUME_OPTIONS}
       device: ${BACKUP_READER_DATA_VOLUME_DEVICE}
+
+  htpasswd-vol:
+    name: ${BACKUP_READER_HTPASSWD_VOL_NAME:-htpasswd-vol}
