@@ -8,6 +8,7 @@ services:
     volumes:
       - backup-vol:/backup:ro
       - htpasswd-vol:/htpasswd
+      - log-vol:/log
     configs:
       - source: nginx-conf
         target: /etc/nginx/nginx.conf
@@ -56,4 +57,7 @@ volumes:
       device: ${BACKUP_READER_DATA_VOLUME_DEVICE}
 
   htpasswd-vol:
-    name: ${BACKUP_READER_HTPASSWD_VOL_NAME:-htpasswd-vol}
+    name: ${BACKUP_READER_HTPASSWD_VOL_NAME:-backup-htpasswd-vol}
+
+  log-vol:
+    name: ${BACKUP_READER_LOG_VOL_NAME:-backup-log-vol}
