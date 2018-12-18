@@ -13,13 +13,13 @@ services:
         target: /etc/nginx/nginx.conf
     healthcheck:
       test: wget --spider http://localhost
-      interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL}
-      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT}
-      retries: ${BACKUP_READER_HEALTHCHECK_RETRIES}
-      start_period: ${BACKUP_READER_HEALTHCHECK_START_PERIOD}
+      interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT:-1m}
+      retries: ${BACKUP_READER_HEALTHCHECK_RETRIES:-3}
+      start_period: ${BACKUP_READER_HEALTHCHECK_START_PERIOD:-1m}
     deploy:
       mode: replicated
-      replicas: ${BACKUP_READER_REPLICAS}
+      replicas: ${BACKUP_READER_REPLICAS:-1}
       labels:
         traefik.root.frontend.auth.basic.users: ${BACKUP_READER_UI_AUTH}
         traefik.root.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/
@@ -27,14 +27,14 @@ services:
         traefik.backend: backup-reader
         traefik.port: '80'
       restart_policy:
-        delay: ${BACKUP_READER_RESTART_POLICY_DELAY}
-        window: ${BACKUP_READER_RESTART_POLICY_WINDOW}
+        delay: ${BACKUP_READER_RESTART_POLICY_DELAY:-10s}
+        window: ${BACKUP_READER_RESTART_POLICY_WINDOW:-1m}
       resources:
         limits:
-          cpus: "${BACKUP_READER_LIMITS_CPUS}"
-          memory: ${BACKUP_READER_LIMITS_MEMORY}
+          cpus: "${BACKUP_READER_LIMITS_CPUS:-0.1}"
+          memory: ${BACKUP_READER_LIMITS_MEMORY:-64M}
         reservations:
-          memory: ${BACKUP_READER_RESERVATIONS_MEMORY}
+          memory: ${BACKUP_READER_RESERVATIONS_MEMORY:-8M}
 
 networks:
   traefik-net:
