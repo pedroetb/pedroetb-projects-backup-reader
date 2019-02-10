@@ -6,7 +6,7 @@ services:
     networks:
       - traefik-net
     volumes:
-      - backup-vol:/backup:ro
+      - data-vol:/backup:ro
       - htpasswd-vol:/htpasswd
     configs:
       - source: nginx-conf
@@ -14,7 +14,7 @@ services:
     healthcheck:
       test: wget --spider http://localhost
       interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL:-30s}
-      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT:-1m}
+      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT:-15s}
       retries: ${BACKUP_READER_HEALTHCHECK_RETRIES:-3}
       start_period: ${BACKUP_READER_HEALTHCHECK_START_PERIOD:-1m}
     deploy:
@@ -47,8 +47,8 @@ configs:
     file: ./nginx.conf
 
 volumes:
-  backup-vol:
-    name: ${BACKUP_READER_DATA_VOL_NAME:-backup-vol}
+  data-vol:
+    name: ${BACKUP_READER_DATA_VOL_NAME:-backup-data-vol}
     driver: local
     driver_opts:
       type: ${BACKUP_READER_DATA_VOLUME_TYPE}
@@ -57,3 +57,8 @@ volumes:
 
   htpasswd-vol:
     name: ${BACKUP_READER_HTPASSWD_VOL_NAME:-backup-htpasswd-vol}
+    driver: local
+    driver_opts:
+      type: ${BACKUP_READER_HTPASSWD_VOLUME_TYPE}
+      o: ${BACKUP_READER_HTPASSWD_VOLUME_OPTIONS}
+      device: ${BACKUP_READER_HTPASSWD_VOLUME_DEVICE}
