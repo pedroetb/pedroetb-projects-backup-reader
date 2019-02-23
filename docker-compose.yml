@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   backup-reader:
-    image: nginx:${IMAGE_TAG:-alpine}
+    image: ${IMAGE_NAME:-nginx}:${IMAGE_TAG:-alpine}
     networks:
       - traefik-net
     volumes:
@@ -12,7 +12,7 @@ services:
       - source: nginx-conf
         target: /etc/nginx/nginx.conf
     healthcheck:
-      test: wget --spider http://localhost
+      test: wget --spider -q http://localhost
       interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL:-30s}
       timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT:-15s}
       retries: ${BACKUP_READER_HEALTHCHECK_RETRIES:-3}
@@ -34,6 +34,7 @@ services:
           cpus: "${BACKUP_READER_LIMITS_CPUS:-0.1}"
           memory: ${BACKUP_READER_LIMITS_MEMORY:-64M}
         reservations:
+          cpus: "${BACKUP_READER_RESERVATIONS_CPUS:-0.01}"
           memory: ${BACKUP_READER_RESERVATIONS_MEMORY:-8M}
 
 networks:
