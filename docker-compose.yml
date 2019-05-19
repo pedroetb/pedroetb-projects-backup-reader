@@ -31,10 +31,10 @@ services:
         window: ${BACKUP_READER_RESTART_POLICY_WINDOW:-1m}
       resources:
         limits:
-          cpus: "${BACKUP_READER_LIMITS_CPUS:-0.1}"
+          cpus: '${BACKUP_READER_LIMITS_CPUS:-0.1}'
           memory: ${BACKUP_READER_LIMITS_MEMORY:-64M}
         reservations:
-          cpus: "${BACKUP_READER_RESERVATIONS_CPUS:-0.01}"
+          cpus: '${BACKUP_READER_RESERVATIONS_CPUS:-0.001}'
           memory: ${BACKUP_READER_RESERVATIONS_MEMORY:-8M}
 
 networks:
