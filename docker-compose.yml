@@ -4,38 +4,47 @@ services:
   backup-reader:
     image: ${IMAGE_NAME:-nginx}:${IMAGE_TAG:-alpine}
     networks:
-      - traefik-net
+      traefik-net:
     volumes:
       - data-vol:/backup:ro
       - htpasswd-vol:/htpasswd
     configs:
-      - source: nginx-conf
+      - source: nginx-config
         target: /etc/nginx/nginx.conf
     healthcheck:
-      test: wget --spider -q http://localhost
-      interval: ${BACKUP_READER_HEALTHCHECK_INTERVAL:-30s}
-      timeout: ${BACKUP_READER_HEALTHCHECK_TIMEOUT:-15s}
-      retries: ${BACKUP_READER_HEALTHCHECK_RETRIES:-3}
-      start_period: ${BACKUP_READER_HEALTHCHECK_START_PERIOD:-1m}
+      test: wget --spider -q http://localhost:${PORT}
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+      retries: ${HEALTHCHECK_RETRIES:-10}
+      start_period: ${HEALTHCHECK_START_PERIOD:-1m}
     deploy:
       mode: replicated
-      replicas: ${BACKUP_READER_REPLICAS:-1}
-      labels:
-        traefik.root.frontend.auth.basic.users: ${BACKUP_READER_UI_AUTH}
-        traefik.root.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME};Path:/
-        traefik.default.frontend.rule: Host:${BACKUP_READER_SUBDOMAIN}.${PUBLIC_HOSTNAME}
-        traefik.backend: backup-reader
-        traefik.port: '80'
+      replicas: ${REPLICAS:-1}
       restart_policy:
-        delay: ${BACKUP_READER_RESTART_POLICY_DELAY:-10s}
-        window: ${BACKUP_READER_RESTART_POLICY_WINDOW:-1m}
+        delay: ${RESTART_DELAY:-5s}
+      update_config:
+        delay: ${UPDATE_DELAY:-1m}
+      labels:
+        traefik.http.routers.backup-reader-root.entrypoints: ${TRAEFIK_ENTRYPOINT}
+        traefik.http.routers.backup-reader-root.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
+        traefik.http.routers.backup-reader-root.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) && Path(`/`)
+        traefik.http.middlewares.backup-reader-root-auth.basicauth.users: ${TRAEFIK_AUTH}
+        traefik.http.routers.backup-reader-root.middlewares: backup-reader-root-auth
+        traefik.http.routers.backup-reader-root.service: backup-reader
+
+        traefik.http.routers.backup-reader-default.entrypoints: ${TRAEFIK_ENTRYPOINT}
+        traefik.http.routers.backup-reader-default.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
+        traefik.http.routers.backup-reader-default.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)
+        traefik.http.routers.backup-reader-default.service: backup-reader
+
+        traefik.http.services.backup-reader.loadbalancer.server.port: ${PORT}
       resources:
         limits:
-          cpus: '${BACKUP_READER_LIMITS_CPUS:-0.1}'
-          memory: ${BACKUP_READER_LIMITS_MEMORY:-64M}
+          cpus: '${RESOURCES_LIMITS_CPUS:-0.1}'
+          memory: ${RESOURCES_LIMITS_MEMORY:-64M}
         reservations:
-          cpus: '${BACKUP_READER_RESERVATIONS_CPUS:-0.001}'
-          memory: ${BACKUP_READER_RESERVATIONS_MEMORY:-8M}
+          cpus: '${RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${RESOURCES_RESERVATIONS_MEMORY:-8M}
 
 networks:
   traefik-net:
@@ -43,23 +52,23 @@ networks:
     external: true
 
 configs:
-  nginx-conf:
-    name: ${BACKUP_READER_NGINX_CONF_NAME:-backup-nginx-conf}
+  nginx-config:
+    name: ${NGINX_CONFIG_NAME:-backup-nginx}
     file: ./nginx.conf
 
 volumes:
   data-vol:
-    name: ${BACKUP_READER_DATA_VOL_NAME:-backup-data-vol}
+    name: ${DATA_VOL_NAME:-backup-data-vol}
     driver: local
     driver_opts:
-      type: ${BACKUP_READER_DATA_VOLUME_TYPE}
-      o: ${BACKUP_READER_DATA_VOLUME_OPTIONS}
-      device: ${BACKUP_READER_DATA_VOLUME_DEVICE}
+      type: ${DATA_VOL_TYPE}
+      o: ${DATA_VOL_OPTIONS}
+      device: ${DATA_VOL_DEVICE}
 
   htpasswd-vol:
-    name: ${BACKUP_READER_HTPASSWD_VOL_NAME:-backup-htpasswd-vol}
+    name: ${HTPASSWD_VOL_NAME:-backup-htpasswd-vol}
     driver: local
     driver_opts:
-      type: ${BACKUP_READER_HTPASSWD_VOLUME_TYPE}
-      o: ${BACKUP_READER_HTPASSWD_VOLUME_OPTIONS}
-      device: ${BACKUP_READER_HTPASSWD_VOLUME_DEVICE}
+      type: ${HTPASSWD_VOL_TYPE}
+      o: ${HTPASSWD_VOL_OPTIONS}
+      device: ${HTPASSWD_VOL_DEVICE}
