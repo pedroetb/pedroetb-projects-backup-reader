@@ -3,14 +3,25 @@ version: '3.7'
 services:
   backup-reader-nginx:
     image: ${NGINX_IMAGE_NAME:-nginx}:${NGINX_IMAGE_TAG:-alpine}
+    command:
+      - sh
+      - -c
+      - envsubst "$${ENVSUBST_VARS}" < ${NGINX_CONF_TMPL} > ${NGINX_CONF_PROD};
+        nginx -g 'daemon off;'
+    environment:
+      DOCKER_DNS_RESOLVER:
+      HTPASSWD_PATH:
+      CADDY_HOST:
+      CADDY_PORT:
+      ENVSUBST_VARS: $${DOCKER_DNS_RESOLVER} $${HTPASSWD_PATH} $${CADDY_HOST} $${CADDY_PORT}
     networks:
       backup-reader-net:
       traefik-net:
     volumes:
-      - htpasswd-vol:/htpasswd
+      - htpasswd-vol:${HTPASSWD_PATH}
     configs:
       - source: nginx-config
-        target: /etc/nginx/nginx.conf
+        target: ${NGINX_CONF_TMPL}
     healthcheck:
       test: wget --spider -q http://localhost:${NGINX_PORT}/favicon.ico
       interval: ${NGINX_HEALTHCHECK_INTERVAL:-30s}
@@ -49,10 +60,11 @@ services:
     environment:
       CADDY_PORT:
       CADDY_HEALTH_PORT:
+      BACKUP_DATA_PATH:
     networks:
       backup-reader-net:
     volumes:
-      - data-vol:/backup:ro
+      - data-vol:${BACKUP_DATA_PATH}:ro
     configs:
       - source: caddyfile-config
         target: /Caddyfile
@@ -71,8 +83,8 @@ services:
         delay: ${CADDY_UPDATE_DELAY:-1m}
       resources:
         limits:
-          cpus: '${CADDY_RESOURCES_LIMITS_CPUS:-0.1}'
-          memory: ${CADDY_RESOURCES_LIMITS_MEMORY:-32M}
+          cpus: '${CADDY_RESOURCES_LIMITS_CPUS:-0.5}'
+          memory: ${CADDY_RESOURCES_LIMITS_MEMORY:-64M}
         reservations:
           cpus: '${CADDY_RESOURCES_RESERVATIONS_CPUS:-0.001}'
           memory: ${CADDY_RESOURCES_RESERVATIONS_MEMORY:-8M}

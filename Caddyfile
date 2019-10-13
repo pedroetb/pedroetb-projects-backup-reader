@@ -1,5 +1,5 @@
 :{$CADDY_PORT} {
-	root /backup
+	root {$BACKUP_DATA_PATH}
 	browse
 	tls off
 }
