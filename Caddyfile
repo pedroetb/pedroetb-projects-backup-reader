@@ -1,0 +1,10 @@
+:{$CADDY_PORT} {
+	root /backup
+	browse
+	tls off
+}
+
+:{$CADDY_HEALTH_PORT} {
+	status 200 /
+	tls off
+}
