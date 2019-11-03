@@ -56,7 +56,7 @@ services:
           memory: ${NGINX_RESOURCES_RESERVATIONS_MEMORY:-4M}
 
   backup-reader-caddy:
-    image: ${CADDY_IMAGE_NAME:-lucaslorentz/caddy-docker-proxy}:${CADDY_IMAGE_TAG:-alpine}
+    image: ${CADDY_IMAGE_NAME:-productionwentdown/caddy}:${CADDY_IMAGE_TAG:-1.0.3}
     environment:
       CADDY_PORT:
       CADDY_HEALTH_PORT:
@@ -64,10 +64,11 @@ services:
     networks:
       backup-reader-net:
     volumes:
+      - work-vol:/etc/.caddy
       - data-vol:${BACKUP_DATA_PATH}:ro
     configs:
       - source: caddyfile-config
-        target: /Caddyfile
+        target: /etc/Caddyfile
     healthcheck:
       test: wget --spider -q http://localhost:${CADDY_HEALTH_PORT}
       interval: ${CADDY_HEALTHCHECK_INTERVAL:-30s}
@@ -109,6 +110,9 @@ configs:
     file: ./Caddyfile
 
 volumes:
+  work-vol:
+    name: ${WORK_VOL_NAME:-backup-work-vol}
+
   data-vol:
     name: ${DATA_VOL_NAME:-backup-data-vol}
     driver: local
