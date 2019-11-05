@@ -69,12 +69,6 @@ services:
     configs:
       - source: caddyfile-config
         target: /etc/Caddyfile
-    healthcheck:
-      test: wget --spider -q http://localhost:${CADDY_HEALTH_PORT}
-      interval: ${CADDY_HEALTHCHECK_INTERVAL:-30s}
-      timeout: ${CADDY_HEALTHCHECK_TIMEOUT:-15s}
-      retries: ${CADDY_HEALTHCHECK_RETRIES:-10}
-      start_period: ${CADDY_HEALTHCHECK_START_PERIOD:-1m}
     deploy:
       mode: replicated
       replicas: ${CADDY_REPLICAS:-1}
