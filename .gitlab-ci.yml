@@ -1,0 +1,13 @@
+include:
+  - project: 'pedroetb-projects/gitlab-ci-templates'
+    ref: master
+    file: '/deployment.yml'
+
+stages:
+  - deploy
+
+.deploy:
+  variables:
+    SERVICES_TO_CHECK: ${STACK}_${CI_PROJECT_NAME}-nginx ${STACK}_${CI_PROJECT_NAME}-caddy
+  environment:
+    url: https://${DD_TRAEFIK_SUBDOMAIN}.${DD_TRAEFIK_DOMAIN}

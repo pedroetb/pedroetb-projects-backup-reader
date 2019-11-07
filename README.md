@@ -2,7 +2,7 @@
 
 ## Create credentials
 
-After deploy, log in running container and run the following commands, replacing `${USER}` value with desired usernames (one each time):
+After deploy, log in `backup-reader-nginx` running container and run the following commands, replacing `${USER}` value with desired usernames (one each time):
 
 ```
 $ apk add openssl
