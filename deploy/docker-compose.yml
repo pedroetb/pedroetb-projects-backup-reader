@@ -97,11 +97,11 @@ networks:
 configs:
   nginx-config:
     name: ${NGINX_CONFIG_NAME:-backup-nginx}
-    file: ./nginx.conf
+    file: ./config/nginx.conf
 
   caddyfile-config:
     name: ${CADDYFILE_CONFIG_NAME:-backup-caddyfile}
-    file: ./Caddyfile
+    file: ./config/Caddyfile
 
 volumes:
   work-vol:
