@@ -8,6 +8,6 @@ stages:
 
 .deploy:
   variables:
-    SERVICES_TO_CHECK: ${STACK}_${CI_PROJECT_NAME}-nginx ${STACK}_${CI_PROJECT_NAME}-caddy
+    SERVICES_TO_CHECK: ${CI_PROJECT_NAME}_${CI_PROJECT_NAME}-nginx ${CI_PROJECT_NAME}_${CI_PROJECT_NAME}-caddy
   environment:
     url: https://${DD_TRAEFIK_SUBDOMAIN}.${DD_TRAEFIK_DOMAIN}
