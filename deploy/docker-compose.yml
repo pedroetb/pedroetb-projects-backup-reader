@@ -36,6 +36,8 @@ services:
       update_config:
         delay: ${NGINX_UPDATE_DELAY:-1m}
       labels:
+        traefik.enable: 'true'
+
         traefik.http.routers.backup-reader-root.entrypoints: ${TRAEFIK_ENTRYPOINT}
         traefik.http.routers.backup-reader-root.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
         traefik.http.routers.backup-reader-root.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) && Path(`/`)
@@ -92,6 +94,7 @@ networks:
 
   traefik-net:
     name: ${TRAEFIK_NET_NAME:-traefik-net}
+    driver: ${TRAEFIK_NET_DRIVER:-overlay}
     external: true
 
 configs:
