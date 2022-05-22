@@ -1,127 +1,62 @@
-version: '3.7'
+version: '3.9'
 
 services:
-  backup-reader-nginx:
-    image: ${NGINX_IMAGE_NAME:-nginx}:${NGINX_IMAGE_TAG:-alpine}
-    command:
-      - sh
-      - -c
-      - envsubst "$${ENVSUBST_VARS}" < ${NGINX_CONF_TMPL} > ${NGINX_CONF_PROD};
-        nginx -g 'daemon off;'
+  backup-reader:
+    image: ${IMAGE_NAME:-caddy}:${IMAGE_TAG:-latest}
     environment:
-      DOCKER_DNS_RESOLVER:
-      HTPASSWD_PATH:
-      CADDY_HOST:
       CADDY_PORT:
-      ENVSUBST_VARS: $${DOCKER_DNS_RESOLVER} $${HTPASSWD_PATH} $${CADDY_HOST} $${CADDY_PORT}
+      BACKUP_DATA_PATH:
+      ROOT_USER:
+      ROOT_PASS:
+      HASHED_PASS_platanito:
+      HASHED_PASS_frambuesita:
+      HASHED_PASS_tamarillito:
+      HASHED_PASS_pitayita:
+      HASHED_PASS_pedro:
+      HASHED_PASS_pedro-work:
     networks:
-      backup-reader-net:
       traefik-net:
     volumes:
-      - htpasswd-vol:${HTPASSWD_PATH}
-    configs:
-      - source: nginx-config
-        target: ${NGINX_CONF_TMPL}
-    healthcheck:
-      test: wget --spider -q http://localhost:${NGINX_PORT}/favicon.ico
-      interval: ${NGINX_HEALTHCHECK_INTERVAL:-30s}
-      timeout: ${NGINX_HEALTHCHECK_TIMEOUT:-15s}
-      retries: ${NGINX_HEALTHCHECK_RETRIES:-10}
-      start_period: ${NGINX_HEALTHCHECK_START_PERIOD:-1m}
-    deploy:
-      mode: replicated
-      replicas: ${NGINX_REPLICAS:-1}
-      restart_policy:
-        delay: ${NGINX_RESTART_DELAY:-5s}
-      update_config:
-        delay: ${NGINX_UPDATE_DELAY:-1m}
-      labels:
-        traefik.enable: 'true'
-
-        traefik.http.routers.backup-reader-root.entrypoints: ${TRAEFIK_ENTRYPOINT}
-        traefik.http.routers.backup-reader-root.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
-        traefik.http.routers.backup-reader-root.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) && Path(`/`)
-        traefik.http.middlewares.backup-reader-root-auth.basicauth.users: ${TRAEFIK_AUTH}
-        traefik.http.routers.backup-reader-root.middlewares: backup-reader-root-auth
-
-        traefik.http.routers.backup-reader-default.entrypoints: ${TRAEFIK_ENTRYPOINT}
-        traefik.http.routers.backup-reader-default.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
-        traefik.http.routers.backup-reader-default.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)
-
-        traefik.http.services.backup-reader.loadbalancer.server.port: ${NGINX_PORT}
-      resources:
-        limits:
-          cpus: '${NGINX_RESOURCES_LIMITS_CPUS:-0.1}'
-          memory: ${NGINX_RESOURCES_LIMITS_MEMORY:-32M}
-        reservations:
-          cpus: '${NGINX_RESOURCES_RESERVATIONS_CPUS:-0.001}'
-          memory: ${NGINX_RESOURCES_RESERVATIONS_MEMORY:-4M}
-
-  backup-reader-caddy:
-    image: ${CADDY_IMAGE_NAME:-productionwentdown/caddy}:${CADDY_IMAGE_TAG:-1.0.3}
-    environment:
-      CADDY_PORT:
-      CADDY_HEALTH_PORT:
-      BACKUP_DATA_PATH:
-    networks:
-      backup-reader-net:
-    volumes:
-      - work-vol:/etc/.caddy
       - data-vol:${BACKUP_DATA_PATH}:ro
     configs:
       - source: caddyfile-config
-        target: /etc/Caddyfile
+        target: /etc/caddy/Caddyfile
     deploy:
       mode: replicated
-      replicas: ${CADDY_REPLICAS:-1}
+      replicas: ${REPLICAS:-1}
       restart_policy:
-        delay: ${CADDY_RESTART_DELAY:-5s}
+        delay: ${RESTART_DELAY:-5s}
       update_config:
-        delay: ${CADDY_UPDATE_DELAY:-1m}
+        delay: ${UPDATE_DELAY:-1m}
+      labels:
+        traefik.enable: 'true'
+        traefik.http.routers.backup-reader.entrypoints: ${TRAEFIK_ENTRYPOINT:-https}
+        traefik.http.routers.backup-reader.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)
+        traefik.http.services.backup-reader.loadbalancer.server.port: ${CADDY_PORT}
       resources:
         limits:
-          cpus: '${CADDY_RESOURCES_LIMITS_CPUS:-0.5}'
-          memory: ${CADDY_RESOURCES_LIMITS_MEMORY:-64M}
+          cpus: '${RESOURCES_LIMITS_CPUS:-0.5}'
+          memory: ${RESOURCES_LIMITS_MEMORY:-64M}
         reservations:
-          cpus: '${CADDY_RESOURCES_RESERVATIONS_CPUS:-0.001}'
-          memory: ${CADDY_RESOURCES_RESERVATIONS_MEMORY:-8M}
+          cpus: '${RESOURCES_RESERVATIONS_CPUS:-0.001}'
+          memory: ${RESOURCES_RESERVATIONS_MEMORY:-8M}
 
 networks:
-  backup-reader-net:
-    name: ${BACKUP_READER_NET_NAME:-backup-reader-net}
-    driver: ${BACKUP_READER_NET_DRIVER:-overlay}
-    attachable: ${BACKUP_READER_NET_ATTACHABLE:-true}
-
   traefik-net:
     name: ${TRAEFIK_NET_NAME:-traefik-net}
     driver: ${TRAEFIK_NET_DRIVER:-overlay}
     external: true
 
 configs:
-  nginx-config:
-    name: ${NGINX_CONFIG_NAME:-backup-nginx}
-    file: ./config/nginx.conf
-
   caddyfile-config:
-    name: ${CADDYFILE_CONFIG_NAME:-backup-caddyfile}
+    name: ${CADDYFILE_CONFIG_NAME:-backup-reader-caddyfile}
     file: ./config/Caddyfile
 
 volumes:
-  work-vol:
-    name: ${WORK_VOL_NAME:-backup-work-vol}
-
   data-vol:
     name: ${DATA_VOL_NAME:-backup-data-vol}
     driver: local
     driver_opts:
       type: ${DATA_VOL_TYPE}
-      o: ${DATA_VOL_OPTIONS}
+      o: addr=${DATA_VOL_ADDR},${VOL_OPTS}
       device: ${DATA_VOL_DEVICE}
-
-  htpasswd-vol:
-    name: ${HTPASSWD_VOL_NAME:-backup-htpasswd-vol}
-    driver: local
-    driver_opts:
-      type: ${HTPASSWD_VOL_TYPE}
-      o: ${HTPASSWD_VOL_OPTIONS}
-      device: ${HTPASSWD_VOL_DEVICE}
