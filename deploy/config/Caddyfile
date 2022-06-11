@@ -3,20 +3,7 @@
 }
 
 :{$CADDY_PORT} {
-	basicauth / bcrypt {
-		{$ROOT_USER} {$ROOT_PASS}
-	}
-	root / {$BACKUP_DATA_PATH}
-
-	@regexp_matcher {
-		path_regexp username_regexp ^/([^/]+).*$
-	}
-	basicauth @regexp_matcher bcrypt {
-		{re.username_regexp.1} {env.HASHED_PASS_{re.username_regexp.1}}
-	}
-	root @regexp_matcher {$BACKUP_DATA_PATH}/{re.username_regexp.1}
-
-	respond /health "OK" 200
-
+	root * {$BACKUP_DATA_PATH}
 	file_server browse
+	respond /health "OK" 200
 }

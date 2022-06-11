@@ -6,14 +6,6 @@ services:
     environment:
       CADDY_PORT:
       BACKUP_DATA_PATH:
-      ROOT_USER:
-      ROOT_PASS:
-      HASHED_PASS_platanito:
-      HASHED_PASS_frambuesita:
-      HASHED_PASS_tamarillito:
-      HASHED_PASS_pitayita:
-      HASHED_PASS_pedro:
-      HASHED_PASS_pedro-work:
     networks:
       traefik-net:
     volumes:
@@ -21,6 +13,12 @@ services:
     configs:
       - source: caddyfile-config
         target: /etc/caddy/Caddyfile
+    healthcheck:
+      test: wget --spider -q http://localhost:${CADDY_PORT}/health
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-15s}
+      retries: ${HEALTHCHECK_RETRIES:-10}
+      start_period: ${HEALTHCHECK_START_PERIOD:-30s}
     deploy:
       mode: replicated
       replicas: ${REPLICAS:-1}
@@ -30,8 +28,17 @@ services:
         delay: ${UPDATE_DELAY:-1m}
       labels:
         traefik.enable: 'true'
-        traefik.http.routers.backup-reader.entrypoints: ${TRAEFIK_ENTRYPOINT:-https}
-        traefik.http.routers.backup-reader.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`)
+
+        traefik.http.routers.backup-reader-root.entrypoints: ${TRAEFIK_ENTRYPOINT}
+        traefik.http.routers.backup-reader-root.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) && Path(`/`)
+        traefik.http.middlewares.backup-reader-root-auth.basicauth.users: ${TRAEFIK_ROOT_AUTH}
+        traefik.http.routers.backup-reader-root.middlewares: backup-reader-root-auth
+
+        traefik.http.routers.backup-reader-path.entrypoints: ${TRAEFIK_ENTRYPOINT}
+        traefik.http.routers.backup-reader-path.rule: Host(`${TRAEFIK_SUBDOMAIN}.${TRAEFIK_DOMAIN}`) && PathPrefix(`/{name:[^/]+}/`)
+        traefik.http.middlewares.backup-reader-path-auth.basicauth.users: ${TRAEFIK_PATH_AUTH}
+        traefik.http.routers.backup-reader-path.middlewares: backup-reader-path-auth
+
         traefik.http.services.backup-reader.loadbalancer.server.port: ${CADDY_PORT}
       resources:
         limits:
