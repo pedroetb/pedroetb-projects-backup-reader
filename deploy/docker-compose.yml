@@ -46,7 +46,7 @@ services:
           memory: ${RESOURCES_LIMITS_MEMORY:-64M}
         reservations:
           cpus: '${RESOURCES_RESERVATIONS_CPUS:-0.001}'
-          memory: ${RESOURCES_RESERVATIONS_MEMORY:-8M}
+          memory: ${RESOURCES_RESERVATIONS_MEMORY:-16M}
 
 networks:
   traefik-net:
@@ -65,5 +65,5 @@ volumes:
     driver: local
     driver_opts:
       type: ${DATA_VOL_TYPE}
-      o: addr=${DATA_VOL_ADDR},${VOL_OPTS}
+      o: addr=${DATA_VOL_ADDR},${DATA_VOL_OPTS}
       device: ${DATA_VOL_DEVICE}
