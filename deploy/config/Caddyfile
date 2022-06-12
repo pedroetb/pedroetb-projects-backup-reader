@@ -1,5 +1,11 @@
 {
+	admin off
 	auto_https off
+	log {
+		format console {
+			time_format iso8601
+		}
+	}
 }
 
 :{$CADDY_PORT} {
