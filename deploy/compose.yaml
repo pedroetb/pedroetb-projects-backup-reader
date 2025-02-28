@@ -60,8 +60,8 @@ configs:
 volumes:
   data-vol:
     name: ${DATA_VOL_NAME:-backup-data-vol}
-    driver: local
+    driver: ${VOL_DRIVER}
     driver_opts:
-      type: ${DATA_VOL_TYPE}
-      o: addr=${DATA_VOL_ADDR},${DATA_VOL_OPTS}
-      device: ${DATA_VOL_DEVICE}
+      type: ${VOL_TYPE}
+      o: addr=${VOL_ADDR},vers=${VOL_VERS},${VOL_OPTS}
+      device: :${VOL_DEVICE_PREFIX}${DATA_VOL_DEVICE:-/backup/}
